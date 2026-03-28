@@ -1,22 +1,31 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Queue & Appointment API for Algerian Public Services
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: services
+    description: Public service categories and offices
+  - name: appointments
+    description: Appointment booking and management
+  - name: queues
+    description: Queue status and management
+  - name: wilayas
+    description: Algerian wilayas and communes
+  - name: admin
+    description: Admin / staff operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +33,385 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /wilayas:
+    get:
+      operationId: listWilayas
+      tags: [wilayas]
+      summary: List all Algerian wilayas
+      responses:
+        "200":
+          description: List of wilayas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Wilaya"
+
+  /wilayas/{wilayaId}/communes:
+    get:
+      operationId: listCommunes
+      tags: [wilayas]
+      summary: List communes for a wilaya
+      parameters:
+        - name: wilayaId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of communes
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Commune"
+
+  /service-categories:
+    get:
+      operationId: listServiceCategories
+      tags: [services]
+      summary: List all service categories
+      responses:
+        "200":
+          description: Service categories
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServiceCategory"
+
+  /offices:
+    get:
+      operationId: listOffices
+      tags: [services]
+      summary: List offices with optional filters
+      parameters:
+        - name: wilayaId
+          in: query
+          schema:
+            type: integer
+        - name: categoryId
+          in: query
+          schema:
+            type: integer
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of offices
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Office"
+
+  /offices/{officeId}:
+    get:
+      operationId: getOffice
+      tags: [services]
+      summary: Get office details
+      parameters:
+        - name: officeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Office details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OfficeDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /offices/{officeId}/services:
+    get:
+      operationId: listOfficeServices
+      tags: [services]
+      summary: List services offered by an office
+      parameters:
+        - name: officeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Office services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/OfficeService"
+
+  /offices/{officeId}/available-slots:
+    get:
+      operationId: getAvailableSlots
+      tags: [appointments]
+      summary: Get available appointment slots for an office
+      parameters:
+        - name: officeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: serviceId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Available time slots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TimeSlot"
+
+  /appointments:
+    get:
+      operationId: listAppointments
+      tags: [appointments]
+      summary: List appointments for current citizen (by phone)
+      parameters:
+        - name: phone
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Appointment"
+    post:
+      operationId: createAppointment
+      tags: [appointments]
+      summary: Book a new appointment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAppointmentRequest"
+      responses:
+        "201":
+          description: Appointment created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Slot unavailable
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /appointments/{appointmentId}:
+    get:
+      operationId: getAppointment
+      tags: [appointments]
+      summary: Get appointment details
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Appointment details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /appointments/{appointmentId}/cancel:
+    post:
+      operationId: cancelAppointment
+      tags: [appointments]
+      summary: Cancel an appointment
+      parameters:
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Appointment"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /queues/{officeId}/status:
+    get:
+      operationId: getQueueStatus
+      tags: [queues]
+      summary: Get current queue status for an office
+      parameters:
+        - name: officeId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Queue status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueueStatus"
+
+  /queues/{officeId}/my-position:
+    get:
+      operationId: getMyQueuePosition
+      tags: [queues]
+      summary: Get citizen's position in queue
+      parameters:
+        - name: officeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: appointmentId
+          in: query
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Position in queue
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/QueuePosition"
+
+  /admin/offices/{officeId}/queue:
+    get:
+      operationId: adminGetQueue
+      tags: [admin]
+      summary: Admin - get full queue with patient details
+      parameters:
+        - name: officeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Full queue list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppointmentAdmin"
+
+  /admin/offices/{officeId}/appointments/{appointmentId}/status:
+    patch:
+      operationId: adminUpdateAppointmentStatus
+      tags: [admin]
+      summary: Admin - update appointment status (call next, mark done, no-show)
+      parameters:
+        - name: officeId
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: appointmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateStatusRequest"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AppointmentAdmin"
+
+  /admin/stats:
+    get:
+      operationId: adminGetStats
+      tags: [admin]
+      summary: Admin - dashboard statistics
+      parameters:
+        - name: officeId
+          in: query
+          schema:
+            type: integer
+        - name: date
+          in: query
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +419,301 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error, message]
+
+    Wilaya:
+      type: object
+      properties:
+        id:
+          type: integer
+        code:
+          type: string
+        nameAr:
+          type: string
+        nameFr:
+          type: string
+        region:
+          type: string
+      required: [id, code, nameAr, nameFr, region]
+
+    Commune:
+      type: object
+      properties:
+        id:
+          type: integer
+        wilayaId:
+          type: integer
+        nameAr:
+          type: string
+        nameFr:
+          type: string
+      required: [id, wilayaId, nameAr, nameFr]
+
+    ServiceCategory:
+      type: object
+      properties:
+        id:
+          type: integer
+        nameAr:
+          type: string
+        nameFr:
+          type: string
+        nameEn:
+          type: string
+        icon:
+          type: string
+        description:
+          type: string
+        color:
+          type: string
+      required: [id, nameAr, nameFr, nameEn, icon, description, color]
+
+    Office:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        nameAr:
+          type: string
+        categoryId:
+          type: integer
+        categoryName:
+          type: string
+        wilayaId:
+          type: integer
+        wilayaName:
+          type: string
+        address:
+          type: string
+        phone:
+          type: string
+        openTime:
+          type: string
+        closeTime:
+          type: string
+        workingDays:
+          type: array
+          items:
+            type: string
+        averageWaitMinutes:
+          type: integer
+        todayQueueCount:
+          type: integer
+        rating:
+          type: number
+      required: [id, name, nameAr, categoryId, categoryName, wilayaId, wilayaName, address, phone, openTime, closeTime, workingDays, averageWaitMinutes, todayQueueCount, rating]
+
+    OfficeDetail:
+      allOf:
+        - $ref: "#/components/schemas/Office"
+        - type: object
+          properties:
+            commune:
+              type: string
+            description:
+              type: string
+            services:
+              type: array
+              items:
+                $ref: "#/components/schemas/OfficeService"
+          required: [commune, description, services]
+
+    OfficeService:
+      type: object
+      properties:
+        id:
+          type: integer
+        officeId:
+          type: integer
+        nameAr:
+          type: string
+        nameFr:
+          type: string
+        duration:
+          type: integer
+          description: Duration in minutes
+        requiredDocuments:
+          type: array
+          items:
+            type: string
+        fee:
+          type: number
+      required: [id, officeId, nameAr, nameFr, duration, requiredDocuments, fee]
+
+    TimeSlot:
+      type: object
+      properties:
+        time:
+          type: string
+        available:
+          type: boolean
+        remainingCapacity:
+          type: integer
+      required: [time, available, remainingCapacity]
+
+    Appointment:
+      type: object
+      properties:
+        id:
+          type: integer
+        ticketNumber:
+          type: string
+        officeId:
+          type: integer
+        officeName:
+          type: string
+        serviceId:
+          type: integer
+        serviceName:
+          type: string
+        citizenName:
+          type: string
+        citizenPhone:
+          type: string
+        citizenNationalId:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, called, in_progress, completed, cancelled, no_show]
+        queuePosition:
+          type: integer
+        estimatedWaitMinutes:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, ticketNumber, officeId, officeName, serviceId, serviceName, citizenName, citizenPhone, citizenNationalId, date, time, status, queuePosition, estimatedWaitMinutes, createdAt]
+
+    CreateAppointmentRequest:
+      type: object
+      properties:
+        officeId:
+          type: integer
+        serviceId:
+          type: integer
+        citizenName:
+          type: string
+        citizenPhone:
+          type: string
+        citizenNationalId:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+        notes:
+          type: string
+      required: [officeId, serviceId, citizenName, citizenPhone, citizenNationalId, date, time]
+
+    QueueStatus:
+      type: object
+      properties:
+        officeId:
+          type: integer
+        officeName:
+          type: string
+        currentTicket:
+          type: string
+        currentNumber:
+          type: integer
+        waitingCount:
+          type: integer
+        completedToday:
+          type: integer
+        averageWaitMinutes:
+          type: integer
+        isOpen:
+          type: boolean
+        lastUpdated:
+          type: string
+          format: date-time
+      required: [officeId, officeName, currentTicket, currentNumber, waitingCount, completedToday, averageWaitMinutes, isOpen, lastUpdated]
+
+    QueuePosition:
+      type: object
+      properties:
+        appointmentId:
+          type: integer
+        ticketNumber:
+          type: string
+        position:
+          type: integer
+        estimatedWaitMinutes:
+          type: integer
+        status:
+          type: string
+      required: [appointmentId, ticketNumber, position, estimatedWaitMinutes, status]
+
+    AppointmentAdmin:
+      allOf:
+        - $ref: "#/components/schemas/Appointment"
+        - type: object
+          properties:
+            calledAt:
+              type: string
+              format: date-time
+            completedAt:
+              type: string
+              format: date-time
+
+    UpdateStatusRequest:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [confirmed, called, in_progress, completed, no_show, cancelled]
+      required: [status]
+
+    AdminStats:
+      type: object
+      properties:
+        totalToday:
+          type: integer
+        completedToday:
+          type: integer
+        waitingNow:
+          type: integer
+        noShowToday:
+          type: integer
+        averageWaitMinutes:
+          type: integer
+        peakHour:
+          type: string
+        appointmentsByHour:
+          type: array
+          items:
+            type: object
+            properties:
+              hour:
+                type: string
+              count:
+                type: integer
+            required: [hour, count]
+        appointmentsByService:
+          type: array
+          items:
+            type: object
+            properties:
+              serviceName:
+                type: string
+              count:
+                type: integer
+            required: [serviceName, count]
+      required: [totalToday, completedToday, waitingNow, noShowToday, averageWaitMinutes, peakHour, appointmentsByHour, appointmentsByService]

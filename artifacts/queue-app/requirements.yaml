@@ -1,0 +1,18 @@
+packages:
+  "framer-motion": "For smooth page transitions and micro-interactions"
+  "recharts": "For the admin dashboard statistics charts"
+  "date-fns": "For formatting dates and times nicely"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for safely merging Tailwind classes"
+
+images:
+  - path: "artifacts/queue-app/public/images/hero-bg.png"
+    description: "A clean, abstract, modern architectural background with very soft deep teal and subtle gold geometric accents. It should look like a highly professional, trustworthy digital government service portal. Bright, airy, and minimal."
+    aspect_ratio: "16:9"
+  - path: "artifacts/queue-app/public/images/logo-icon.png"
+    description: "A minimalist, modern vector logo emblem for a public service queuing app. It should incorporate subtle abstract references to tracking or time (like a minimal clock or queue icon) using deep teal and white colors. Very clean, flat, app-icon style."
+    aspect_ratio: "1:1"
+
+notes:
+  - "The app relies heavily on the generated API hooks in @workspace/api-client-react for data fetching."
+  - "Arabic text is included alongside French/English for authenticity as an Algerian portal."
