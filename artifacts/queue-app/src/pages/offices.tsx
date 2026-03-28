@@ -47,14 +47,14 @@ export default function Offices() {
       <div className="bg-primary pt-12 pb-24 px-4 relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]" />
         <div className="container mx-auto max-w-5xl relative z-10">
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">Find a Government Office</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">Find a Business Near You</h1>
           
           <div className="bg-white p-2 rounded-2xl shadow-xl flex flex-col md:flex-row gap-2">
             <div className="flex-1 relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground w-5 h-5" />
               <input 
                 type="text" 
-                placeholder="Search by name, commune..."
+                placeholder="Search clinic, bank, salon..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-12 pr-4 py-4 bg-transparent border-none focus:outline-none focus:ring-0 text-foreground"
@@ -97,7 +97,7 @@ export default function Offices() {
         ) : !offices?.length ? (
           <div className="bg-white rounded-3xl p-12 text-center shadow-sm border border-border">
             <Building2 className="w-16 h-16 text-muted-foreground/30 mx-auto mb-4" />
-            <h3 className="text-xl font-bold text-foreground mb-2">No offices found</h3>
+            <h3 className="text-xl font-bold text-foreground mb-2">No results found</h3>
             <p className="text-muted-foreground">Try adjusting your filters or search term.</p>
             <button 
               onClick={() => { setWilayaId(undefined); setCategoryId(undefined); setSearch(""); }}

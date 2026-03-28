@@ -64,7 +64,7 @@ export default function AdminDashboard() {
     if (nextApt) {
       handleStatusUpdate(nextApt.id, 'called');
     } else {
-      toast({ title: "No waiting patients in queue" });
+      toast({ title: "No one waiting in queue" });
     }
   };
 
@@ -114,7 +114,7 @@ export default function AdminDashboard() {
             disabled={updateMutation.isPending}
             className="px-6 py-3 bg-primary text-white rounded-xl font-bold hover:bg-primary/90 shadow-lg shadow-primary/20 flex items-center gap-2 transition-transform hover:-translate-y-0.5 active:translate-y-0"
           >
-            <PlayCircle className="w-5 h-5" /> Call Next Patient
+            <PlayCircle className="w-5 h-5" /> Call Next Client
           </button>
         </div>
 

@@ -40,14 +40,14 @@ export default function Home() {
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
               </span>
-              Live Queue Tracking Now Available
+              Live Queue Tracking Available
             </span>
             <h1 className="text-5xl md:text-6xl font-bold tracking-tight text-foreground mb-6 text-balance">
               Skip the line. <br />
               <span className="text-primary">Book your turn</span> online.
             </h1>
             <p className="text-lg text-muted-foreground mb-10 max-w-2xl mx-auto">
-              The official portal to book appointments and track live queue status for all public administration offices in Algeria. <span className="font-arabic">احجز موعدك وتتبع دورك بكل سهولة</span>
+              Book appointments at clinics, banks, salons, garages and more — then track your spot in the queue in real time. <span className="font-arabic">احجز موعدك وتتبع دورك بكل سهولة</span>
             </p>
 
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -55,7 +55,7 @@ export default function Home() {
                 href="/offices"
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-primary text-primary-foreground font-semibold shadow-lg shadow-primary/25 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 flex items-center justify-center gap-2"
               >
-                Find an Office <ArrowRight className="w-5 h-5" />
+                Find a Business <ArrowRight className="w-5 h-5" />
               </Link>
               <Link 
                 href="/appointments"

@@ -9,10 +9,9 @@ import { sql } from "drizzle-orm";
 async function seed() {
   console.log("🌱 Seeding database...");
 
-  // Clear
   await db.execute(sql`TRUNCATE appointments, office_services, offices, communes, service_categories, wilayas RESTART IDENTITY CASCADE`);
 
-  // === WILAYAS (58 of Algeria) ===
+  // === WILAYAS ===
   const wilayasData = [
     { code: "01", nameAr: "أدرار", nameFr: "Adrar", region: "Sud" },
     { code: "02", nameAr: "الشلف", nameFr: "Chlef", region: "Nord-Ouest" },
@@ -77,15 +76,15 @@ async function seed() {
   const insertedWilayas = await db.insert(wilayasTable).values(wilayasData).returning();
   console.log(`✓ ${insertedWilayas.length} wilayas inserted`);
 
-  // Communes for Alger (16) and Oran (31) and Constantine (25)
   const alger = insertedWilayas.find(w => w.code === "16")!;
   const oran = insertedWilayas.find(w => w.code === "31")!;
   const constantine = insertedWilayas.find(w => w.code === "25")!;
   const setif = insertedWilayas.find(w => w.code === "19")!;
   const blida = insertedWilayas.find(w => w.code === "09")!;
+  const tizi = insertedWilayas.find(w => w.code === "15")!;
+  const annaba = insertedWilayas.find(w => w.code === "23")!;
 
-  const communesData = [
-    // Alger
+  await db.insert(communesTable).values([
     { wilayaId: alger.id, nameAr: "الجزائر الوسطى", nameFr: "Alger Centre" },
     { wilayaId: alger.id, nameAr: "باب الوادي", nameFr: "Bab El Oued" },
     { wilayaId: alger.id, nameAr: "الأبيار", nameFr: "El Biar" },
@@ -96,315 +95,358 @@ async function seed() {
     { wilayaId: alger.id, nameAr: "بوزريعة", nameFr: "Bouzaréah" },
     { wilayaId: alger.id, nameAr: "الدار البيضاء", nameFr: "Dar El Beïda" },
     { wilayaId: alger.id, nameAr: "شراقة", nameFr: "Cheraga" },
-    // Oran
     { wilayaId: oran.id, nameAr: "وهران المدينة", nameFr: "Oran Ville" },
     { wilayaId: oran.id, nameAr: "سيدي الشحمي", nameFr: "Sidi El Chemi" },
     { wilayaId: oran.id, nameAr: "البطيوة", nameFr: "Bethioua" },
-    { wilayaId: oran.id, nameAr: "مرسى الكبير", nameFr: "Mers El Kébir" },
-    // Constantine
     { wilayaId: constantine.id, nameAr: "قسنطينة المدينة", nameFr: "Constantine Ville" },
-    { wilayaId: constantine.id, nameAr: "حامة بوزيان", nameFr: "Hamma Bouziane" },
-    // Sétif
     { wilayaId: setif.id, nameAr: "سطيف", nameFr: "Sétif" },
-    { wilayaId: setif.id, nameAr: "عين أرنات", nameFr: "Aïn Arnat" },
-    // Blida
     { wilayaId: blida.id, nameAr: "البليدة", nameFr: "Blida" },
-    { wilayaId: blida.id, nameAr: "البرواقية", nameFr: "Bougara" },
-  ];
+    { wilayaId: tizi.id, nameAr: "تيزي وزو", nameFr: "Tizi Ouzou Ville" },
+    { wilayaId: annaba.id, nameAr: "عنابة", nameFr: "Annaba Ville" },
+  ]);
+  console.log("✓ Communes inserted");
 
-  await db.insert(communesTable).values(communesData);
-  console.log(`✓ ${communesData.length} communes inserted`);
-
-  // === SERVICE CATEGORIES ===
+  // === SERVICE CATEGORIES — 100% private businesses ===
   const categories = await db.insert(serviceCategoriesTable).values([
-    { nameAr: "الحالة المدنية", nameFr: "État Civil", nameEn: "Civil Registry", icon: "FileText", description: "Actes de naissance, mariage, décès et extraits de registre civil", color: "#2563EB" },
-    { nameAr: "بطاقة الهوية والجواز", nameFr: "Carte Nationale & Passeport", nameEn: "ID & Passport", icon: "CreditCard", description: "Demande et renouvellement de carte nationale d'identité et passeport", color: "#7C3AED" },
-    { nameAr: "الضرائب", nameFr: "Direction des Impôts", nameEn: "Tax Authority", icon: "Calculator", description: "Déclarations fiscales, NIF, attestations fiscales", color: "#059669" },
-    { nameAr: "الضمان الاجتماعي", nameFr: "Sécurité Sociale (CNAS)", nameEn: "Social Security", icon: "Shield", description: "Immatriculation, remboursements, attestations CNAS", color: "#DC2626" },
-    { nameAr: "خدمات البلدية", nameFr: "Services de la Commune (APC)", nameEn: "Municipality", icon: "Building2", description: "Permis de construire, conformités, certificats de résidence", color: "#D97706" },
-    { nameAr: "خدمات الصحة", nameFr: "Établissements de Santé", nameEn: "Health Services", icon: "Heart", description: "Consultations, certificats médicaux, vaccination", color: "#0891B2" },
-    { nameAr: "تسجيل المركبات", nameFr: "Carte Grise & Permis", nameEn: "Vehicle Registration", icon: "Car", description: "Immatriculation, transfert, carte grise et permis de conduire", color: "#4F46E5" },
-    { nameAr: "وكالة التشغيل", nameFr: "ANEM - Emploi", nameEn: "Employment Agency", icon: "Briefcase", description: "Inscription chômage, offres d'emploi, formation professionnelle", color: "#BE185D" },
+    { nameAr: "طب وصحة", nameFr: "Santé & Cliniques", nameEn: "Health & Clinics", icon: "Stethoscope", description: "Cliniques privées, médecins généralistes, spécialistes et dentistes", color: "#0891B2" },
+    { nameAr: "بنوك وتمويل", nameFr: "Banques & Finances", nameEn: "Banks & Finance", icon: "Landmark", description: "Ouverture de comptes, crédits, virements et services bancaires", color: "#2563EB" },
+    { nameAr: "جمال وعناية", nameFr: "Beauté & Bien-être", nameEn: "Beauty & Wellness", icon: "Scissors", description: "Salons de coiffure, spas, soins esthétiques et massage", color: "#BE185D" },
+    { nameAr: "ميكانيك وسيارات", nameFr: "Auto & Mécanique", nameEn: "Auto & Repair", icon: "Wrench", description: "Garages, vidanges, entretien et réparation automobile", color: "#D97706" },
+    { nameAr: "قانون وتوثيق", nameFr: "Juridique & Notariat", nameEn: "Legal & Notary", icon: "Scale", description: "Avocats, notaires, huissiers et conseils juridiques", color: "#7C3AED" },
+    { nameAr: "اتصالات وتقنية", nameFr: "Télécom & Tech", nameEn: "Telecom & Tech", icon: "Wifi", description: "Boutiques Ooredoo, Djezzy, Mobilis, réparation smartphone", color: "#059669" },
+    { nameAr: "عقارات", nameFr: "Immobilier", nameEn: "Real Estate", icon: "Home", description: "Agences immobilières, estimation, location et achat", color: "#4F46E5" },
+    { nameAr: "تعليم وتكوين", nameFr: "Éducation & Formation", nameEn: "Education", icon: "GraduationCap", description: "Centres de formation, auto-écoles, cours particuliers", color: "#B45309" },
   ]).returning();
-  console.log(`✓ ${categories.length} service categories inserted`);
+  console.log(`✓ ${categories.length} categories inserted`);
 
-  // === OFFICES ===
-  const [civilCat, idCat, taxCat, ssCat, munCat, healthCat, carCat, anemCat] = categories;
+  const [healthCat, bankCat, beautyCat, autoCat, legalCat, telecomCat, realEstateCat, eduCat] = categories;
 
+  // === OFFICES — ALL PRIVATE BUSINESSES ===
   const offices = await db.insert(officesTable).values([
-    // Alger - État Civil
+    // --- Health / Cliniques ---
     {
-      name: "APC Alger Centre - État Civil",
-      nameAr: "بلدية الجزائر الوسطى - الحالة المدنية",
-      categoryId: civilCat.id, wilayaId: alger.id,
-      address: "1 Rue Larbi Ben M'hidi, Alger Centre, Alger 16000",
-      phone: "021 73 45 12", openTime: "08:00", closeTime: "16:00",
-      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "Service état civil de la commune d'Alger Centre. Délivrance de tous les actes d'état civil.",
-      rating: 3.8,
-    },
-    // Alger - CNI/Passeport
-    {
-      name: "DLEP Alger - Carte Nationale & Passeport",
-      nameAr: "مديرية الحريات العامة - بطاقة هوية وجواز سفر",
-      categoryId: idCat.id, wilayaId: alger.id,
-      address: "5 Avenue des Frères Bouadou, Hussein Dey, Alger 16009",
-      phone: "021 49 30 00", openTime: "08:00", closeTime: "15:30",
-      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "Délivrance et renouvellement des cartes nationales d'identité et passeports pour la wilaya d'Alger.",
-      rating: 3.5,
-    },
-    // Alger - Impôts
-    {
-      name: "DRI Alger Centre - Direction des Impôts",
-      nameAr: "مديرية الضرائب - الجزائر الوسطى",
-      categoryId: taxCat.id, wilayaId: alger.id,
-      address: "42 Rue Belouizdad, Alger 16015",
-      phone: "021 65 89 20", openTime: "08:30", closeTime: "15:30",
-      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "Centre des impôts pour les déclarations, NIF et attestations fiscales.",
-      rating: 3.2,
-    },
-    // Alger - CNAS
-    {
-      name: "CNAS Alger El Madania",
-      nameAr: "الصندوق الوطني للتأمينات الاجتماعية - المدنية",
-      categoryId: ssCat.id, wilayaId: alger.id,
-      address: "Cité El Madania, Route de Kouba, Alger 16050",
-      phone: "021 56 12 44", openTime: "08:00", closeTime: "15:00",
-      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "Agence CNAS pour l'immatriculation, remboursements et prestations sociales.",
-      rating: 3.6,
-    },
-    // Alger - APC
-    {
-      name: "APC Bab El Oued - Services Communaux",
-      nameAr: "بلدية باب الوادي - الخدمات البلدية",
-      categoryId: munCat.id, wilayaId: alger.id,
-      address: "Rue Hassiba Ben Bouali, Bab El Oued, Alger 16001",
-      phone: "021 97 63 10", openTime: "08:00", closeTime: "16:00",
-      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "Services municipaux de Bab El Oued: résidence, conformité, permis de construire.",
-      rating: 3.4,
-    },
-    // Alger - Santé
-    {
-      name: "Polyclinique Bab El Oued",
-      nameAr: "متعدد الخدمات الطبية - باب الوادي",
+      name: "Clinique El Shifa",
+      nameAr: "عيادة الشفاء",
       categoryId: healthCat.id, wilayaId: alger.id,
-      address: "Rue du Dr Benzerdjeb, Bab El Oued, Alger",
-      phone: "021 96 44 22", openTime: "07:00", closeTime: "17:00",
+      address: "12 Rue Didouche Mourad, Alger Centre, Alger",
+      phone: "021 73 45 12", openTime: "08:00", closeTime: "18:00",
       workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Saturday"],
-      description: "Polyclinique offrant consultations, urgences et certificats médicaux.",
-      rating: 4.1,
+      description: "Clinique médicale privée offrant consultations générales et spécialisées, bilan de santé et urgences mineures.",
+      rating: 4.5,
     },
-    // Alger - Carte Grise
     {
-      name: "Daïra Sidi M'Hamed - Carte Grise",
-      nameAr: "دائرة سيدي محمد - بطاقة رمادية",
-      categoryId: carCat.id, wilayaId: alger.id,
-      address: "10 Rue du Stade, Sidi M'Hamed, Alger 16000",
-      phone: "021 73 11 55", openTime: "08:00", closeTime: "15:30",
+      name: "Cabinet Dr. Benali — Dentiste",
+      nameAr: "عيادة د. بن علي لطب الأسنان",
+      categoryId: healthCat.id, wilayaId: alger.id,
+      address: "45 Boulevard Krim Belkacem, El Biar, Alger",
+      phone: "021 92 33 10", openTime: "09:00", closeTime: "17:00",
       workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "Immatriculation et transfert de véhicules, permis de conduire.",
-      rating: 3.3,
+      description: "Cabinet dentaire moderne — soins dentaires, orthodontie, implants et blanchiment.",
+      rating: 4.7,
     },
-    // Alger - ANEM
     {
-      name: "ANEM Alger Centre",
-      nameAr: "وكالة التشغيل - الجزائر الوسطى",
-      categoryId: anemCat.id, wilayaId: alger.id,
-      address: "25 Rue Hassiba Ben Bouali, Alger 16000",
-      phone: "021 73 29 87", openTime: "08:00", closeTime: "15:00",
-      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "Agence nationale pour l'emploi: inscription, allocations chômage, offres d'emploi.",
-      rating: 3.0,
+      name: "Clinique Sania — Oran",
+      nameAr: "عيادة سانيا - وهران",
+      categoryId: healthCat.id, wilayaId: oran.id,
+      address: "8 Rue Larbi Ben M'hidi, Oran",
+      phone: "041 33 78 90", openTime: "08:00", closeTime: "17:00",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Saturday"],
+      description: "Clinique privée à Oran, spécialisée en médecine interne et cardiologie.",
+      rating: 4.3,
     },
-    // Oran - État Civil
     {
-      name: "APC Oran - État Civil",
-      nameAr: "بلدية وهران - الحالة المدنية",
-      categoryId: civilCat.id, wilayaId: oran.id,
-      address: "Place du 1er Novembre, Oran 31000",
-      phone: "041 33 22 11", openTime: "08:00", closeTime: "15:30",
+      name: "Cabinet Dr. Meziane — Ophtalmologie",
+      nameAr: "عيادة د. مزيان - طب العيون",
+      categoryId: healthCat.id, wilayaId: constantine.id,
+      address: "22 Rue Larbi Ben M'hidi, Constantine",
+      phone: "031 94 11 55", openTime: "09:00", closeTime: "16:30",
       workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "État civil de la commune d'Oran.",
-      rating: 3.7,
+      description: "Cabinet d'ophtalmologie — bilans visuels, lunettes et lentilles de contact.",
+      rating: 4.6,
     },
-    // Oran - CNAS
+
+    // --- Banks ---
     {
-      name: "CNAS Oran",
-      nameAr: "الصندوق الوطني للتأمينات الاجتماعية - وهران",
-      categoryId: ssCat.id, wilayaId: oran.id,
-      address: "Boulevard Millénium, Oran 31000",
-      phone: "041 45 67 89", openTime: "08:00", closeTime: "15:00",
+      name: "BNP Paribas El Djazaïr — Alger Centre",
+      nameAr: "بنك باريبا الجزائر - الجزائر الوسطى",
+      categoryId: bankCat.id, wilayaId: alger.id,
+      address: "2 Boulevard Colonel Amirouche, Alger Centre",
+      phone: "021 73 00 50", openTime: "08:30", closeTime: "15:30",
       workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "Agence CNAS Oran pour toutes les prestations sociales.",
-      rating: 3.4,
-    },
-    // Constantine - État Civil
-    {
-      name: "APC Constantine - État Civil",
-      nameAr: "بلدية قسنطينة - الحالة المدنية",
-      categoryId: civilCat.id, wilayaId: constantine.id,
-      address: "Place des Martyrs, Constantine 25000",
-      phone: "031 94 55 00", openTime: "08:00", closeTime: "16:00",
-      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "État civil de la commune de Constantine.",
-      rating: 3.9,
-    },
-    // Constantine - Impôts
-    {
-      name: "DRI Constantine - Impôts",
-      nameAr: "مديرية الضرائب - قسنطينة",
-      categoryId: taxCat.id, wilayaId: constantine.id,
-      address: "Rue de France, Constantine 25000",
-      phone: "031 94 61 20", openTime: "08:30", closeTime: "15:30",
-      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "Direction des impôts de Constantine.",
-      rating: 3.1,
-    },
-    // Sétif - État Civil
-    {
-      name: "APC Sétif - État Civil",
-      nameAr: "بلدية سطيف - الحالة المدنية",
-      categoryId: civilCat.id, wilayaId: setif.id,
-      address: "Place de l'Indépendance, Sétif 19000",
-      phone: "036 90 22 33", openTime: "08:00", closeTime: "15:30",
-      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
-      description: "État civil de la wilaya de Sétif.",
+      description: "Agence bancaire — ouverture de compte, crédit immobilier, virements internationaux et épargne.",
       rating: 4.0,
     },
-    // Blida - Santé
     {
-      name: "CHU Blida - Consultations Externes",
-      nameAr: "مستشفى البليدة الجامعي - الاستشارات الخارجية",
-      categoryId: healthCat.id, wilayaId: blida.id,
-      address: "Route de Boufarik, Blida 09000",
-      phone: "025 39 12 66", openTime: "07:30", closeTime: "16:30",
+      name: "Société Générale Algérie — Hydra",
+      nameAr: "سوسيتي جنرال الجزائر - حيدرة",
+      categoryId: bankCat.id, wilayaId: alger.id,
+      address: "10 Chemin des Glycines, Hydra, Alger",
+      phone: "021 54 80 00", openTime: "08:30", closeTime: "15:30",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
+      description: "Agence bancaire Société Générale — gestion de patrimoine, cartes bancaires et prêts personnels.",
+      rating: 3.9,
+    },
+    {
+      name: "BDL — Banque de Développement Local Oran",
+      nameAr: "بنك التنمية المحلية - وهران",
+      categoryId: bankCat.id, wilayaId: oran.id,
+      address: "Boulevard de la Soummam, Oran",
+      phone: "041 45 22 33", openTime: "08:30", closeTime: "15:30",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
+      description: "Agence BDL Oran — comptes courants, épargne, microfinance et crédits PME.",
+      rating: 3.7,
+    },
+
+    // --- Beauty ---
+    {
+      name: "Salon Nour — Coiffure & Beauté",
+      nameAr: "صالون نور - تصفيف الشعر والجمال",
+      categoryId: beautyCat.id, wilayaId: alger.id,
+      address: "18 Rue Hassiba Ben Bouali, Bab El Oued, Alger",
+      phone: "0551 23 45 67", openTime: "09:00", closeTime: "19:00",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+      description: "Salon de coiffure mixte — coupes, colorations, soins kératine et maquillage.",
+      rating: 4.8,
+    },
+    {
+      name: "Spa Zenith — Bien-être & Massage",
+      nameAr: "سبا زينيث - استرخاء ومساج",
+      categoryId: beautyCat.id, wilayaId: alger.id,
+      address: "33 Cité Pins Maritimes, Ben Aknoun, Alger",
+      phone: "0661 55 77 99", openTime: "10:00", closeTime: "20:00",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+      description: "Centre de bien-être — massages relaxants, soins visage et corps, hammam et jacuzzi.",
+      rating: 4.9,
+    },
+    {
+      name: "Coiffure Amazigh — Tizi Ouzou",
+      nameAr: "صالون أمازيغ - تيزي وزو",
+      categoryId: beautyCat.id, wilayaId: tizi.id,
+      address: "7 Rue de la Liberté, Tizi Ouzou",
+      phone: "026 22 88 11", openTime: "09:00", closeTime: "18:30",
       workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Saturday"],
-      description: "CHU Blida, consultations spécialisées et urgences.",
+      description: "Salon de coiffure moderne pour hommes et femmes, spécialisé en coiffures traditionnelles et modernes.",
+      rating: 4.4,
+    },
+
+    // --- Auto ---
+    {
+      name: "Garage Ben Aïssa — Mécanique Auto",
+      nameAr: "كراج بن عيسى - ميكانيك السيارات",
+      categoryId: autoCat.id, wilayaId: alger.id,
+      address: "Zone Industrielle, El Harrach, Alger",
+      phone: "021 52 33 44", openTime: "07:30", closeTime: "17:30",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Saturday"],
+      description: "Garage multi-marques — révision, vidange, freins, climatisation et diagnostic électronique.",
       rating: 4.2,
+    },
+    {
+      name: "Centre Auto Toute Marque — Sétif",
+      nameAr: "مركز صيانة السيارات - سطيف",
+      categoryId: autoCat.id, wilayaId: setif.id,
+      address: "Route de Constantine, Sétif",
+      phone: "036 90 55 66", openTime: "08:00", closeTime: "17:00",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Saturday"],
+      description: "Centre de maintenance automobile — vidange, pneumatiques, carrosserie et électronique embarquée.",
+      rating: 4.1,
+    },
+
+    // --- Legal ---
+    {
+      name: "Maître Haddad — Notaire",
+      nameAr: "المعلم حداد - موثق",
+      categoryId: legalCat.id, wilayaId: alger.id,
+      address: "25 Rue Abane Ramdane, Alger Centre",
+      phone: "021 73 88 22", openTime: "09:00", closeTime: "16:00",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
+      description: "Étude notariale — actes immobiliers, successions, contrats de mariage et procurations.",
+      rating: 4.3,
+    },
+    {
+      name: "Cabinet Juridique Ouali & Associés",
+      nameAr: "مكتب والي وشركاه للمحاماة",
+      categoryId: legalCat.id, wilayaId: oran.id,
+      address: "15 Avenue de l'ANP, Oran",
+      phone: "041 33 90 10", openTime: "09:00", closeTime: "17:00",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
+      description: "Cabinet d'avocats — droit commercial, droit de la famille, litiges et contentieux.",
+      rating: 4.5,
+    },
+
+    // --- Telecom ---
+    {
+      name: "Boutique Ooredoo — Alger Centre",
+      nameAr: "متجر أوريدو - الجزائر الوسطى",
+      categoryId: telecomCat.id, wilayaId: alger.id,
+      address: "5 Boulevard Khemisti, Alger Centre",
+      phone: "0770 00 00 00", openTime: "08:30", closeTime: "17:30",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Saturday"],
+      description: "Boutique officielle Ooredoo — abonnements, recharges, smartphones et assistance technique.",
+      rating: 3.8,
+    },
+    {
+      name: "Djezzy Shop — Constantine",
+      nameAr: "متجر جيزي - قسنطينة",
+      categoryId: telecomCat.id, wilayaId: constantine.id,
+      address: "Rue du 1er Novembre, Constantine",
+      phone: "0770 11 22 33", openTime: "09:00", closeTime: "17:00",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Saturday"],
+      description: "Boutique officielle Djezzy — nouvelles lignes, internet 4G, forfaits et SAV.",
+      rating: 3.9,
+    },
+
+    // --- Real Estate ---
+    {
+      name: "Agence Immo El Wifak — Alger",
+      nameAr: "وكالة الوفاق العقارية - الجزائر",
+      categoryId: realEstateCat.id, wilayaId: alger.id,
+      address: "88 Boulevard Saïd Hamdine, Hydra, Alger",
+      phone: "021 60 44 88", openTime: "09:00", closeTime: "17:30",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Saturday"],
+      description: "Agence immobilière — vente, achat, location appartements et villas, estimation gratuite.",
+      rating: 4.1,
+    },
+
+    // --- Education ---
+    {
+      name: "Auto-École El Moukawil — Blida",
+      nameAr: "مدرسة المقاول لتعليم السياقة - البليدة",
+      categoryId: eduCat.id, wilayaId: blida.id,
+      address: "12 Rue de l'Indépendance, Blida",
+      phone: "025 41 77 33", openTime: "08:00", closeTime: "18:00",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday","Saturday"],
+      description: "Auto-école agréée — formation code de la route, conduite manuelle et automatique.",
+      rating: 4.3,
+    },
+    {
+      name: "Centre de Formation Digit'Alg",
+      nameAr: "مركز تكوين ديجيتال الجزائر",
+      categoryId: eduCat.id, wilayaId: annaba.id,
+      address: "Cité Universitaire, Route de la Corniche, Annaba",
+      phone: "038 88 55 22", openTime: "09:00", closeTime: "18:00",
+      workingDays: ["Sunday","Monday","Tuesday","Wednesday","Thursday"],
+      description: "Centre de formation professionnelle en informatique, réseaux, développement web et design.",
+      rating: 4.6,
     },
   ]).returning();
 
   console.log(`✓ ${offices.length} offices inserted`);
 
-  // === OFFICE SERVICES ===
-  const apcAlger = offices[0];
-  const dlepAlger = offices[1];
-  const driAlger = offices[2];
-  const cnasAlger = offices[3];
-  const apcBabElOued = offices[4];
-  const polyBabElOued = offices[5];
-  const carteGriseAlger = offices[6];
-  const anemAlger = offices[7];
-  const apcOran = offices[8];
-  const cnasOran = offices[9];
-  const apcConstantine = offices[10];
-  const driConstantine = offices[11];
-  const apcSetif = offices[12];
-  const chuBlida = offices[13];
+  // === SERVICES ===
+  const [clinicAlger, dentAlger, clinicOran, ophtConst, bnpAlger, sgAlger, bdlOran,
+    salonNour, spaZenith, salonTizi, garageAlger, autoSetif, notaireAlger, cabinetOran,
+    ooredooAlger, djezzyConst, immoAlger, autoEcoleBlida, formationAnnaba] = offices;
 
   await db.insert(officeServicesTable).values([
-    // APC Alger Centre - État Civil
-    { officeId: apcAlger.id, nameAr: "شهادة الميلاد", nameFr: "Extrait de naissance", duration: 10, requiredDocuments: ["Acte de naissance original", "Pièce d'identité du demandeur"], fee: 0 },
-    { officeId: apcAlger.id, nameAr: "شهادة الزواج", nameFr: "Acte de mariage", duration: 10, requiredDocuments: ["Livret de famille", "Pièce d'identité"], fee: 0 },
-    { officeId: apcAlger.id, nameAr: "شهادة الوفاة", nameFr: "Acte de décès", duration: 10, requiredDocuments: ["Acte de naissance du défunt", "Pièce d'identité"], fee: 0 },
-    { officeId: apcAlger.id, nameAr: "شهادة العيش", nameFr: "Certificat de vie", duration: 5, requiredDocuments: ["Pièce d'identité nationale"], fee: 0 },
-    { officeId: apcAlger.id, nameAr: "بطاقة العائلة", nameFr: "Livret de famille", duration: 20, requiredDocuments: ["Acte de mariage", "Actes de naissance des enfants", "CNI des époux"], fee: 0 },
+    // Clinique El Shifa
+    { officeId: clinicAlger.id, nameAr: "استشارة طبية عامة", nameFr: "Consultation médecin généraliste", duration: 20, requiredDocuments: ["Carnet de santé ou ordonnances précédentes"], fee: 1500 },
+    { officeId: clinicAlger.id, nameAr: "بيلان صحي شامل", nameFr: "Bilan de santé complet", duration: 60, requiredDocuments: ["Pièce d'identité", "Résultats d'analyses récents (si disponibles)"], fee: 5000 },
+    { officeId: clinicAlger.id, nameAr: "استشارة طب الأطفال", nameFr: "Consultation pédiatre", duration: 25, requiredDocuments: ["Carnet de vaccination de l'enfant"], fee: 2000 },
+    { officeId: clinicAlger.id, nameAr: "استشارة قلبية وعائية", nameFr: "Consultation cardiologue", duration: 30, requiredDocuments: ["Ordonnance médecin traitant", "Résultats ECG précédents"], fee: 3000 },
 
-    // DLEP - CNI & Passeport
-    { officeId: dlepAlger.id, nameAr: "طلب بطاقة الهوية الوطنية", nameFr: "Demande CNI", duration: 20, requiredDocuments: ["Acte de naissance (moins de 3 mois)", "Justificatif de domicile", "2 photos d'identité", "Ancienne CNI (si renouvellement)"], fee: 0 },
-    { officeId: dlepAlger.id, nameAr: "تجديد بطاقة الهوية الوطنية", nameFr: "Renouvellement CNI", duration: 15, requiredDocuments: ["Ancienne CNI", "Acte de naissance récent", "Justificatif de domicile"], fee: 0 },
-    { officeId: dlepAlger.id, nameAr: "طلب جواز السفر", nameFr: "Demande Passeport", duration: 25, requiredDocuments: ["CNI valide", "Acte de naissance récent", "Justificatif de domicile", "3 photos d'identité", "Timbre fiscal 6000 DA"], fee: 6000 },
-    { officeId: dlepAlger.id, nameAr: "تجديد جواز السفر", nameFr: "Renouvellement Passeport", duration: 20, requiredDocuments: ["Ancien passeport", "CNI valide", "2 photos", "Timbre fiscal 6000 DA"], fee: 6000 },
+    // Dr. Benali Dentiste
+    { officeId: dentAlger.id, nameAr: "فحص واستشارة الأسنان", nameFr: "Examen & consultation dentaire", duration: 20, requiredDocuments: [], fee: 1500 },
+    { officeId: dentAlger.id, nameAr: "تنظيف الأسنان الاحترافي", nameFr: "Détartrage & nettoyage dentaire", duration: 45, requiredDocuments: [], fee: 3500 },
+    { officeId: dentAlger.id, nameAr: "تبييض الأسنان", nameFr: "Blanchiment dentaire", duration: 60, requiredDocuments: [], fee: 8000 },
+    { officeId: dentAlger.id, nameAr: "حشو الأسنان", nameFr: "Obturation (Plombage)", duration: 30, requiredDocuments: [], fee: 2500 },
 
-    // DRI Alger - Impôts
-    { officeId: driAlger.id, nameAr: "الحصول على رقم التعريف الجبائي", nameFr: "Demande de NIF", duration: 20, requiredDocuments: ["RC ou acte de naissance", "Justificatif d'activité", "CNI"], fee: 0 },
-    { officeId: driAlger.id, nameAr: "شهادة التسوية الجبائية", nameFr: "Attestation de mise en conformité fiscale", duration: 15, requiredDocuments: ["NIF", "CNI ou RC", "Dernière déclaration fiscale"], fee: 0 },
-    { officeId: driAlger.id, nameAr: "التصريح السنوي بالضريبة", nameFr: "Dépôt déclaration IRG annuelle", duration: 30, requiredDocuments: ["Formulaire G50", "Justificatifs de revenus", "NIF"], fee: 0 },
+    // Clinique Sania Oran
+    { officeId: clinicOran.id, nameAr: "استشارة طبية عامة", nameFr: "Consultation généraliste", duration: 20, requiredDocuments: ["Carnet de santé"], fee: 1500 },
+    { officeId: clinicOran.id, nameAr: "تخطيط القلب", nameFr: "Électrocardiogramme (ECG)", duration: 20, requiredDocuments: ["Ordonnance médicale"], fee: 2500 },
+    { officeId: clinicOran.id, nameAr: "الأشعة السينية", nameFr: "Radiographie", duration: 15, requiredDocuments: ["Ordonnance médicale"], fee: 2000 },
 
-    // CNAS Alger
-    { officeId: cnasAlger.id, nameAr: "التسجيل في الضمان الاجتماعي", nameFr: "Immatriculation CNAS", duration: 20, requiredDocuments: ["Acte de naissance", "CNI", "Contrat de travail ou attestation patronale"], fee: 0 },
-    { officeId: cnasAlger.id, nameAr: "شهادة التأمين الاجتماعي", nameFr: "Attestation d'assurance sociale", duration: 10, requiredDocuments: ["Numéro d'assuré", "CNI"], fee: 0 },
-    { officeId: cnasAlger.id, nameAr: "طلب استرداد المصاريف الطبية", nameFr: "Demande de remboursement médical", duration: 15, requiredDocuments: ["Ordonnances originales", "Factures pharmacie", "CNI", "RIB bancaire"], fee: 0 },
+    // Dr. Meziane Ophtalmologie
+    { officeId: ophtConst.id, nameAr: "فحص البصر", nameFr: "Examen de la vue", duration: 25, requiredDocuments: ["Ancienne ordonnance (si disponible)"], fee: 2000 },
+    { officeId: ophtConst.id, nameAr: "وصفة النظارات أو العدسات", nameFr: "Prescription lunettes/lentilles", duration: 20, requiredDocuments: [], fee: 1500 },
 
-    // APC Bab El Oued
-    { officeId: apcBabElOued.id, nameAr: "شهادة الإقامة", nameFr: "Certificat de résidence", duration: 10, requiredDocuments: ["CNI", "Justificatif de domicile (quittance ou acte de propriété)"], fee: 0 },
-    { officeId: apcBabElOued.id, nameAr: "رخصة البناء", nameFr: "Permis de construire", duration: 40, requiredDocuments: ["Plan de masse", "Titre de propriété", "CNI", "Étude technique"], fee: 3000 },
-    { officeId: apcBabElOued.id, nameAr: "شهادة الاستلام", nameFr: "Certificat de conformité", duration: 30, requiredDocuments: ["Permis de construire", "Rapport de fin de travaux", "CNI"], fee: 1500 },
+    // BNP Paribas
+    { officeId: bnpAlger.id, nameAr: "فتح حساب بنكي", nameFr: "Ouverture de compte courant", duration: 30, requiredDocuments: ["CNI valide", "Justificatif de domicile", "Relevé de salaire (3 derniers mois)"], fee: 0 },
+    { officeId: bnpAlger.id, nameAr: "طلب قرض شخصي", nameFr: "Demande de crédit à la consommation", duration: 45, requiredDocuments: ["CNI", "Fiches de paie", "Relevé bancaire"], fee: 0 },
+    { officeId: bnpAlger.id, nameAr: "قرض عقاري", nameFr: "Demande de crédit immobilier", duration: 60, requiredDocuments: ["CNI", "Promesse de vente", "Fiches de paie 6 mois", "Avis d'imposition"], fee: 0 },
+    { officeId: bnpAlger.id, nameAr: "خدمات بطاقة الدفع", nameFr: "Gestion carte bancaire (perte, renouvellement)", duration: 20, requiredDocuments: ["CNI", "Numéro de compte"], fee: 500 },
 
-    // Polyclinique Bab El Oued
-    { officeId: polyBabElOued.id, nameAr: "استشارة طبية عامة", nameFr: "Consultation médecine générale", duration: 15, requiredDocuments: ["Carnet de santé", "Carte CNAS"], fee: 0 },
-    { officeId: polyBabElOued.id, nameAr: "شهادة طبية", nameFr: "Certificat médical", duration: 10, requiredDocuments: ["CNI", "Carnet de santé"], fee: 200 },
-    { officeId: polyBabElOued.id, nameAr: "تطعيم", nameFr: "Vaccination", duration: 10, requiredDocuments: ["Carnet de vaccination", "CNI"], fee: 0 },
+    // Société Générale
+    { officeId: sgAlger.id, nameAr: "فتح حساب توفير", nameFr: "Ouverture compte épargne", duration: 25, requiredDocuments: ["CNI", "Justificatif de domicile"], fee: 0 },
+    { officeId: sgAlger.id, nameAr: "استشارة إدارة الثروة", nameFr: "Conseil en gestion de patrimoine", duration: 60, requiredDocuments: ["CNI", "Justificatifs revenus et placements"], fee: 0 },
 
-    // Carte Grise
-    { officeId: carteGriseAlger.id, nameAr: "تسجيل مركبة جديدة", nameFr: "Immatriculation véhicule neuf", duration: 25, requiredDocuments: ["Facture d'achat", "Attestation d'assurance", "CNI", "Bon de livraison"], fee: 5000 },
-    { officeId: carteGriseAlger.id, nameAr: "نقل ملكية مركبة", nameFr: "Mutation carte grise (véhicule occasion)", duration: 30, requiredDocuments: ["Ancienne carte grise", "Contrat de vente légalisé", "CNI acheteur", "Assurance", "Quitus fiscal"], fee: 3500 },
-    { officeId: carteGriseAlger.id, nameAr: "طلب رخصة السياقة", nameFr: "Permis de conduire", duration: 20, requiredDocuments: ["Certificat médical aptitude", "CNI", "Photos", "Attestation d'école de conduite"], fee: 4000 },
+    // BDL Oran
+    { officeId: bdlOran.id, nameAr: "فتح حساب جاري", nameFr: "Ouverture compte courant", duration: 30, requiredDocuments: ["CNI", "Justificatif de domicile"], fee: 0 },
+    { officeId: bdlOran.id, nameAr: "قرض صغير للمؤسسات", nameFr: "Microfinancement PME/TPE", duration: 45, requiredDocuments: ["CNI", "Registre de commerce", "Bilan comptable"], fee: 0 },
 
-    // ANEM
-    { officeId: anemAlger.id, nameAr: "التسجيل في وكالة التشغيل", nameFr: "Inscription chômeur ANEM", duration: 15, requiredDocuments: ["CNI", "Diplômes", "Anciens contrats de travail", "RIB"], fee: 0 },
-    { officeId: anemAlger.id, nameAr: "تجديد بطاقة العمل", nameFr: "Renouvellement inscription ANEM", duration: 10, requiredDocuments: ["Ancienne carte ANEM", "CNI"], fee: 0 },
+    // Salon Nour
+    { officeId: salonNour.id, nameAr: "قص الشعر (رجال)", nameFr: "Coupe homme", duration: 25, requiredDocuments: [], fee: 500 },
+    { officeId: salonNour.id, nameAr: "قص الشعر (سيدات)", nameFr: "Coupe femme (lavage inclus)", duration: 45, requiredDocuments: [], fee: 1200 },
+    { officeId: salonNour.id, nameAr: "صباغة الشعر", nameFr: "Coloration complète", duration: 90, requiredDocuments: [], fee: 3500 },
+    { officeId: salonNour.id, nameAr: "كيراتين للشعر", nameFr: "Soin kératine", duration: 120, requiredDocuments: [], fee: 5000 },
+    { officeId: salonNour.id, nameAr: "مكياج احترافي", nameFr: "Maquillage professionnel", duration: 60, requiredDocuments: [], fee: 3000 },
 
-    // APC Oran
-    { officeId: apcOran.id, nameAr: "شهادة الميلاد", nameFr: "Extrait de naissance", duration: 10, requiredDocuments: ["Acte de naissance original", "CNI"], fee: 0 },
-    { officeId: apcOran.id, nameAr: "شهادة الإقامة", nameFr: "Certificat de résidence", duration: 10, requiredDocuments: ["CNI", "Justificatif de domicile"], fee: 0 },
-    { officeId: apcOran.id, nameAr: "شهادة العيش", nameFr: "Certificat de vie", duration: 5, requiredDocuments: ["CNI"], fee: 0 },
+    // Spa Zenith
+    { officeId: spaZenith.id, nameAr: "مساج استرخائي (٦٠ دقيقة)", nameFr: "Massage relaxant 60 min", duration: 60, requiredDocuments: [], fee: 3500 },
+    { officeId: spaZenith.id, nameAr: "جلسة حمام بخار + مساج", nameFr: "Hammam + massage", duration: 90, requiredDocuments: [], fee: 5000 },
+    { officeId: spaZenith.id, nameAr: "علاج الوجه", nameFr: "Soin visage anti-âge", duration: 60, requiredDocuments: [], fee: 4000 },
 
-    // CNAS Oran
-    { officeId: cnasOran.id, nameAr: "شهادة التأمين الاجتماعي", nameFr: "Attestation d'assurance sociale", duration: 10, requiredDocuments: ["Numéro assuré", "CNI"], fee: 0 },
-    { officeId: cnasOran.id, nameAr: "طلب استرداد المصاريف الطبية", nameFr: "Remboursement médical", duration: 15, requiredDocuments: ["Ordonnances", "Factures", "CNI", "RIB"], fee: 0 },
+    // Salon Tizi
+    { officeId: salonTizi.id, nameAr: "قص وتصفيف", nameFr: "Coupe & coiffage", duration: 30, requiredDocuments: [], fee: 600 },
+    { officeId: salonTizi.id, nameAr: "تصفيف للمناسبات", nameFr: "Coiffure événementielle", duration: 75, requiredDocuments: [], fee: 2500 },
 
-    // APC Constantine
-    { officeId: apcConstantine.id, nameAr: "شهادة الميلاد", nameFr: "Extrait de naissance", duration: 10, requiredDocuments: ["Acte de naissance", "CNI"], fee: 0 },
-    { officeId: apcConstantine.id, nameAr: "بطاقة العائلة", nameFr: "Livret de famille", duration: 20, requiredDocuments: ["Acte de mariage", "CNI des deux époux"], fee: 0 },
+    // Garage Ben Aïssa
+    { officeId: garageAlger.id, nameAr: "تغيير الزيت وفلتر", nameFr: "Vidange + filtre", duration: 30, requiredDocuments: ["Carte grise"], fee: 2500 },
+    { officeId: garageAlger.id, nameAr: "فحص شامل للسيارة", nameFr: "Révision complète", duration: 90, requiredDocuments: ["Carte grise"], fee: 5000 },
+    { officeId: garageAlger.id, nameAr: "إصلاح نظام الفرامل", nameFr: "Réparation freins", duration: 60, requiredDocuments: [], fee: 3500 },
+    { officeId: garageAlger.id, nameAr: "إصلاح التكييف", nameFr: "Climatisation — recharge gaz", duration: 45, requiredDocuments: [], fee: 4000 },
+    { officeId: garageAlger.id, nameAr: "تشخيص إلكتروني", nameFr: "Diagnostic électronique", duration: 30, requiredDocuments: [], fee: 1500 },
 
-    // DRI Constantine
-    { officeId: driConstantine.id, nameAr: "الحصول على رقم التعريف الجبائي", nameFr: "Demande NIF", duration: 20, requiredDocuments: ["CNI", "Justificatif activité"], fee: 0 },
-    { officeId: driConstantine.id, nameAr: "شهادة التسوية الجبائية", nameFr: "Attestation de conformité fiscale", duration: 15, requiredDocuments: ["NIF", "CNI", "Dernière déclaration"], fee: 0 },
+    // Auto Sétif
+    { officeId: autoSetif.id, nameAr: "تغيير الزيت", nameFr: "Vidange huile moteur", duration: 30, requiredDocuments: [], fee: 2000 },
+    { officeId: autoSetif.id, nameAr: "فحص الإطارات", nameFr: "Pneumatiques (montage + équilibrage)", duration: 45, requiredDocuments: [], fee: 1800 },
 
-    // APC Sétif
-    { officeId: apcSetif.id, nameAr: "شهادة الميلاد", nameFr: "Extrait de naissance", duration: 10, requiredDocuments: ["Acte de naissance", "CNI"], fee: 0 },
-    { officeId: apcSetif.id, nameAr: "شهادة الإقامة", nameFr: "Certificat de résidence", duration: 10, requiredDocuments: ["CNI", "Justificatif domicile"], fee: 0 },
+    // Notaire Haddad
+    { officeId: notaireAlger.id, nameAr: "عقد بيع عقاري", nameFr: "Acte de vente immobilière", duration: 45, requiredDocuments: ["Titres de propriété", "CNI vendeur et acheteur", "Quitus fiscal", "Plans cadastraux"], fee: 0 },
+    { officeId: notaireAlger.id, nameAr: "عقد زواج", nameFr: "Contrat de mariage", duration: 30, requiredDocuments: ["CNI des deux époux", "Actes de naissance", "Certificat de résidence"], fee: 3000 },
+    { officeId: notaireAlger.id, nameAr: "توكيل رسمي", nameFr: "Procuration notariée", duration: 20, requiredDocuments: ["CNI du mandant et mandataire"], fee: 2000 },
 
-    // CHU Blida
-    { officeId: chuBlida.id, nameAr: "استشارة تخصصية", nameFr: "Consultation spécialisée", duration: 20, requiredDocuments: ["Ordonnance médecin traitant", "Carte CNAS", "Carnet de santé"], fee: 0 },
-    { officeId: chuBlida.id, nameAr: "استشارة طبية عامة", nameFr: "Consultation médecine générale", duration: 15, requiredDocuments: ["Carnet de santé", "Carte CNAS"], fee: 0 },
-    { officeId: chuBlida.id, nameAr: "شهادة طبية", nameFr: "Certificat médical", duration: 10, requiredDocuments: ["CNI", "Carnet de santé"], fee: 200 },
+    // Cabinet Juridique Oran
+    { officeId: cabinetOran.id, nameAr: "استشارة قانونية", nameFr: "Consultation juridique (1h)", duration: 60, requiredDocuments: ["Documents liés au litige"], fee: 3000 },
+    { officeId: cabinetOran.id, nameAr: "تمثيل قانوني أمام المحكمة", nameFr: "Représentation en justice", duration: 60, requiredDocuments: ["Pièce d'identité", "Dossier complet"], fee: 0 },
+
+    // Ooredoo
+    { officeId: ooredooAlger.id, nameAr: "اشتراك جديد (جوال/إنترنت)", nameFr: "Nouvelle souscription (mobile/internet)", duration: 20, requiredDocuments: ["CNI"], fee: 500 },
+    { officeId: ooredooAlger.id, nameAr: "إصلاح وصيانة", nameFr: "SAV & réparation appareil", duration: 30, requiredDocuments: ["Preuve d'achat si disponible"], fee: 0 },
+    { officeId: ooredooAlger.id, nameAr: "تغيير شريحة اتصال", nameFr: "Remplacement SIM / eSIM", duration: 15, requiredDocuments: ["CNI"], fee: 200 },
+
+    // Djezzy
+    { officeId: djezzyConst.id, nameAr: "خط جديد 4G", nameFr: "Ouverture ligne 4G", duration: 20, requiredDocuments: ["CNI"], fee: 500 },
+    { officeId: djezzyConst.id, nameAr: "ترقية الباقة", nameFr: "Changement de forfait", duration: 10, requiredDocuments: ["CNI"], fee: 0 },
+
+    // Immo El Wifak
+    { officeId: immoAlger.id, nameAr: "تقدير قيمة العقار", nameFr: "Estimation immobilière gratuite", duration: 45, requiredDocuments: ["Titre de propriété ou bail"], fee: 0 },
+    { officeId: immoAlger.id, nameAr: "عرض شراء أو استئجار", nameFr: "Visite & présentation bien immobilier", duration: 60, requiredDocuments: ["CNI"], fee: 0 },
+
+    // Auto-école Blida
+    { officeId: autoEcoleBlida.id, nameAr: "تسجيل في الكود", nameFr: "Inscription code de la route", duration: 20, requiredDocuments: ["CNI", "Photo d'identité", "Certificat médical"], fee: 5000 },
+    { officeId: autoEcoleBlida.id, nameAr: "حصة قيادة", nameFr: "Séance de conduite (moniteur)", duration: 60, requiredDocuments: ["Livret d'apprentissage"], fee: 1500 },
+
+    // Formation Annaba
+    { officeId: formationAnnaba.id, nameAr: "دورة تطوير الويب", nameFr: "Formation développement web (HTML/CSS/JS)", duration: 60, requiredDocuments: ["CNI", "Diplôme BAC ou équivalent"], fee: 3000 },
+    { officeId: formationAnnaba.id, nameAr: "دورة الشبكات والأمن", nameFr: "Formation réseaux & cybersécurité", duration: 60, requiredDocuments: ["CNI"], fee: 4000 },
   ]);
-
-  console.log("✓ Office services inserted");
+  console.log("✓ Services inserted");
 
   // === SAMPLE APPOINTMENTS ===
   const today = new Date().toISOString().split("T")[0];
-  const sampleAppointments = [
-    { ticketNumber: "DZ-2026-10001", officeId: apcAlger.id, serviceId: 1, citizenName: "Ahmed Benali", citizenPhone: "0551234567", citizenNationalId: "16001234567890123", date: today, time: "09:00", status: "completed", queuePosition: 1 },
-    { ticketNumber: "DZ-2026-10002", officeId: apcAlger.id, serviceId: 1, citizenName: "Fatima Saidi", citizenPhone: "0661234567", citizenNationalId: "16009876543210987", date: today, time: "09:30", status: "completed", queuePosition: 2 },
-    { ticketNumber: "DZ-2026-10003", officeId: apcAlger.id, serviceId: 2, citizenName: "Youcef Mammeri", citizenPhone: "0771234567", citizenNationalId: "16001122334455667", date: today, time: "10:00", status: "in_progress", queuePosition: 3 },
-    { ticketNumber: "DZ-2026-10004", officeId: apcAlger.id, serviceId: 1, citizenName: "Nadia Bensalem", citizenPhone: "0591234567", citizenNationalId: "16007788990011223", date: today, time: "10:30", status: "confirmed", queuePosition: 4 },
-    { ticketNumber: "DZ-2026-10005", officeId: apcAlger.id, serviceId: 4, citizenName: "Karim Djebbar", citizenPhone: "0551111222", citizenNationalId: "16003344556677889", date: today, time: "11:00", status: "confirmed", queuePosition: 5 },
-    { ticketNumber: "DZ-2026-10006", officeId: dlepAlger.id, serviceId: 6, citizenName: "Meriem Hadj", citizenPhone: "0661111333", citizenNationalId: "16005566778899001", date: today, time: "09:00", status: "confirmed", queuePosition: 1 },
-    { ticketNumber: "DZ-2026-10007", officeId: dlepAlger.id, serviceId: 8, citizenName: "Bilal Touati", citizenPhone: "0771112233", citizenNationalId: "16001234554321098", date: today, time: "09:30", status: "pending", queuePosition: 2 },
-    { ticketNumber: "DZ-2026-10008", officeId: cnasAlger.id, serviceId: 13, citizenName: "Houria Meziane", citizenPhone: "0551234999", citizenNationalId: "16009988776655443", date: today, time: "08:30", status: "completed", queuePosition: 1 },
-    { ticketNumber: "DZ-2026-10009", officeId: cnasAlger.id, serviceId: 15, citizenName: "Said Boukhalfa", citizenPhone: "0661234888", citizenNationalId: "16002233445566778", date: today, time: "09:00", status: "confirmed", queuePosition: 2 },
-  ];
-
-  await db.insert(appointmentsTable).values(sampleAppointments.map(a => ({
-    ...a,
-    notes: "",
-    calledAt: a.status === "in_progress" || a.status === "completed" ? new Date() : null,
-    completedAt: a.status === "completed" ? new Date() : null,
-  })));
-
-  console.log(`✓ ${sampleAppointments.length} sample appointments inserted`);
-  console.log("🎉 Database seeded successfully!");
+  await db.insert(appointmentsTable).values([
+    { ticketNumber: "DW-2026-10001", officeId: clinicAlger.id, serviceId: 1, citizenName: "Ahmed Benali", citizenPhone: "0551234567", citizenNationalId: "111222333444555", date: today, time: "09:00", status: "completed", queuePosition: 1, notes: "", calledAt: new Date(), completedAt: new Date() },
+    { ticketNumber: "DW-2026-10002", officeId: clinicAlger.id, serviceId: 1, citizenName: "Fatima Saidi", citizenPhone: "0661234567", citizenNationalId: "222333444555666", date: today, time: "09:30", status: "completed", queuePosition: 2, notes: "", calledAt: new Date(), completedAt: new Date() },
+    { ticketNumber: "DW-2026-10003", officeId: clinicAlger.id, serviceId: 2, citizenName: "Youcef Mammeri", citizenPhone: "0771234567", citizenNationalId: "333444555666777", date: today, time: "10:00", status: "in_progress", queuePosition: 3, notes: "", calledAt: new Date(), completedAt: null },
+    { ticketNumber: "DW-2026-10004", officeId: clinicAlger.id, serviceId: 1, citizenName: "Nadia Bensalem", citizenPhone: "0591234567", citizenNationalId: "444555666777888", date: today, time: "10:30", status: "confirmed", queuePosition: 4, notes: "", calledAt: null, completedAt: null },
+    { ticketNumber: "DW-2026-10005", officeId: salonNour.id, serviceId: 22, citizenName: "Meriem Hadj", citizenPhone: "0661111333", citizenNationalId: "555666777888999", date: today, time: "09:00", status: "confirmed", queuePosition: 1, notes: "", calledAt: null, completedAt: null },
+    { ticketNumber: "DW-2026-10006", officeId: bnpAlger.id, serviceId: 14, citizenName: "Bilal Touati", citizenPhone: "0771112233", citizenNationalId: "666777888999000", date: today, time: "09:30", status: "pending", queuePosition: 1, notes: "", calledAt: null, completedAt: null },
+    { ticketNumber: "DW-2026-10007", officeId: garageAlger.id, serviceId: 32, citizenName: "Karim Djebbar", citizenPhone: "0551111222", citizenNationalId: "777888999000111", date: today, time: "08:30", status: "completed", queuePosition: 1, notes: "", calledAt: new Date(), completedAt: new Date() },
+    { ticketNumber: "DW-2026-10008", officeId: garageAlger.id, serviceId: 33, citizenName: "Said Boukhalfa", citizenPhone: "0661234888", citizenNationalId: "888999000111222", date: today, time: "09:00", status: "confirmed", queuePosition: 2, notes: "", calledAt: null, completedAt: null },
+  ]);
+  console.log("✓ Sample appointments inserted");
+  console.log("🎉 Seed done!");
   process.exit(0);
 }
 
-seed().catch(err => {
-  console.error("Seed failed:", err);
-  process.exit(1);
-});
+seed().catch(err => { console.error(err); process.exit(1); });

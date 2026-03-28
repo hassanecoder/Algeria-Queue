@@ -18,7 +18,7 @@ export function Layout({ children }: { children: ReactNode }) {
 
   const navLinks = [
     { href: "/", label: "Home", icon: Building2 },
-    { href: "/offices", label: "Find Office", icon: Building2 },
+    { href: "/offices", label: "Find a Business", icon: Building2 },
     { href: "/appointments", label: "My Appointments", icon: CalendarDays },
     { href: "/admin", label: "Admin Access", icon: LayoutDashboard },
   ];
@@ -45,8 +45,8 @@ export function Layout({ children }: { children: ReactNode }) {
               />
             </div>
             <div className="flex flex-col">
-              <span className="font-bold text-foreground leading-tight tracking-tight">Khadamatech</span>
-              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Public Services</span>
+              <span className="font-bold text-foreground leading-tight tracking-tight">Dawri</span>
+              <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">دوري · Book your turn</span>
             </div>
           </Link>
 
@@ -132,19 +132,19 @@ export function Layout({ children }: { children: ReactNode }) {
             <div className="col-span-1 md:col-span-2">
               <div className="flex items-center gap-2 mb-4">
                 <ActivitySquare className="w-6 h-6 text-primary" />
-                <span className="font-bold text-lg">Khadamatech الجزائر</span>
+                <span className="font-bold text-lg">Dawri — دوري</span>
               </div>
               <p className="text-muted-foreground max-w-sm">
-                The official digital portal for queuing and appointment booking across public services in Algeria. Saving your time, organizing our services.
+                Book appointments and track live queue status for clinics, banks, salons, auto repair shops, and more across Algeria. احجز موعدك وتتبع دورك.
               </p>
             </div>
             <div>
-              <h4 className="font-semibold mb-4 text-foreground">Services</h4>
+              <h4 className="font-semibold mb-4 text-foreground">Categories</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link href="/offices" className="hover:text-primary transition-colors">Civil Registry</Link></li>
-                <li><Link href="/offices" className="hover:text-primary transition-colors">National ID & Passport</Link></li>
-                <li><Link href="/offices" className="hover:text-primary transition-colors">Tax Authority</Link></li>
-                <li><Link href="/offices" className="hover:text-primary transition-colors">Social Security</Link></li>
+                <li><Link href="/offices?categoryId=1" className="hover:text-primary transition-colors">Cliniques & Santé</Link></li>
+                <li><Link href="/offices?categoryId=2" className="hover:text-primary transition-colors">Banques & Finances</Link></li>
+                <li><Link href="/offices?categoryId=3" className="hover:text-primary transition-colors">Beauté & Bien-être</Link></li>
+                <li><Link href="/offices?categoryId=4" className="hover:text-primary transition-colors">Auto & Mécanique</Link></li>
               </ul>
             </div>
             <div>
@@ -157,7 +157,7 @@ export function Layout({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="mt-12 pt-8 border-t border-border text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} Ministère de la Numérisation - République Algérienne. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} Dawri دوري — Private queue & booking platform. Not affiliated with any government entity.</p>
           </div>
         </div>
       </footer>
