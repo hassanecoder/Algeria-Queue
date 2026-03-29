@@ -7,9 +7,20 @@ import {
 import { sql } from "drizzle-orm";
 
 async function seed() {
-  console.log("🌱 Seeding database...");
+  const seedMode = process.env.SEED_MODE === "bootstrap" ? "bootstrap" : "reset";
+  console.log(`🌱 Seeding database in ${seedMode} mode...`);
 
-  await db.execute(sql`TRUNCATE appointments, office_services, offices, communes, service_categories, wilayas RESTART IDENTITY CASCADE`);
+  if (seedMode === "bootstrap") {
+    const existing = await db.select().from(officesTable).limit(1);
+    if (existing.length > 0) {
+      console.log("Bootstrap seed skipped; offices already present");
+      return;
+    }
+  }
+
+  if (seedMode === "reset") {
+    await db.execute(sql`TRUNCATE appointments, office_services, offices, communes, service_categories, wilayas RESTART IDENTITY CASCADE`);
+  }
 
   // === WILAYAS ===
   const wilayasData = [
