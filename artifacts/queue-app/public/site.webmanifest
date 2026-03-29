@@ -1,0 +1,21 @@
+{
+  "name": "Queue & Appointment Manager",
+  "short_name": "DZ Queue",
+  "description": "Manage queues and appointments efficiently in Algeria. Digital queue management for hospitals, government offices, banks, and businesses. Reduce wait times with smart scheduling.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0891B2",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/apple-touch-icon.svg",
+      "sizes": "180x180",
+      "type": "image/svg+xml"
+    }
+  ]
+}
